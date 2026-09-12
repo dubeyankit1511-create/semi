@@ -339,33 +339,37 @@ export const Vault = () => {
                         style={{ background: 'rgba(255,255,255,0.03)' }} title="Share">
                         <Share2 className="w-3.5 h-3.5" style={{ color: '#64748b' }} />
                       </button>
-                      <button 
-                        onClick={() => {
-                          const newClass = prompt(`Current classification is ${doc.classification}.\nEnter new classification (PUBLIC, RESTRICTED, CONFIDENTIAL):`, doc.classification);
-                          if (newClass && ['PUBLIC', 'RESTRICTED', 'CONFIDENTIAL'].includes(newClass.toUpperCase())) {
-                            const newDocs = documents.map(d => d.id === doc.id ? { ...d, classification: newClass.toUpperCase() } : d);
-                            setDocuments(newDocs);
-                            saveDocumentList(newDocs);
-                            logActivity('MODIFY', `Changed classification of ${doc.title} to ${newClass.toUpperCase()}`, user || 'Unknown', '192.168.1.10', 'HIGH', doc.id);
-                          }
-                        }}
-                        className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors hover:bg-white/10"
-                        style={{ background: 'rgba(255,255,255,0.03)' }} title="Modify Classification">
-                        <Edit3 className="w-3.5 h-3.5" style={{ color: '#64748b' }} />
-                      </button>
-                      <button 
-                        onClick={() => {
-                          if (confirm(`Are you sure you want to PERMANENTLY DELETE ${doc.title}?`)) {
-                            const newDocs = documents.filter(d => d.id !== doc.id);
-                            setDocuments(newDocs);
-                            saveDocumentList(newDocs);
-                            logActivity('DELETE', `Permanently deleted document: ${doc.title}`, user || 'Unknown', '192.168.1.10', 'HIGH', doc.id);
-                          }
-                        }}
-                        className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors hover:bg-red-500/20"
-                        style={{ background: 'rgba(255,255,255,0.03)' }} title="Delete">
-                        <Trash2 className="w-3.5 h-3.5" style={{ color: '#ef4444' }} />
-                      </button>
+                      {user?.role === 'ADMIN' && (
+                        <>
+                          <button 
+                            onClick={() => {
+                              const newClass = prompt(`Current classification is ${doc.classification}.\nEnter new classification (PUBLIC, RESTRICTED, CONFIDENTIAL):`, doc.classification);
+                              if (newClass && ['PUBLIC', 'RESTRICTED', 'CONFIDENTIAL'].includes(newClass.toUpperCase())) {
+                                const newDocs = documents.map(d => d.id === doc.id ? { ...d, classification: newClass.toUpperCase() } : d);
+                                setDocuments(newDocs);
+                                saveDocumentList(newDocs);
+                                logActivity('MODIFY', `Changed classification of ${doc.title} to ${newClass.toUpperCase()}`, user || 'Unknown', '192.168.1.10', 'HIGH', doc.id);
+                              }
+                            }}
+                            className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors hover:bg-white/10"
+                            style={{ background: 'rgba(255,255,255,0.03)' }} title="Modify Classification">
+                            <Edit3 className="w-3.5 h-3.5" style={{ color: '#64748b' }} />
+                          </button>
+                          <button 
+                            onClick={() => {
+                              if (confirm(`Are you sure you want to PERMANENTLY DELETE ${doc.title}?`)) {
+                                const newDocs = documents.filter(d => d.id !== doc.id);
+                                setDocuments(newDocs);
+                                saveDocumentList(newDocs);
+                                logActivity('DELETE', `Permanently deleted document: ${doc.title}`, user || 'Unknown', '192.168.1.10', 'HIGH', doc.id);
+                              }
+                            }}
+                            className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors hover:bg-red-500/20"
+                            style={{ background: 'rgba(255,255,255,0.03)' }} title="Delete">
+                            <Trash2 className="w-3.5 h-3.5" style={{ color: '#ef4444' }} />
+                          </button>
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>
