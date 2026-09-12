@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Search, Upload, File, ShieldCheck, Lock, Filter, X,
   ChevronDown, Hash, FileText, Image, FileSpreadsheet, Eye, Download, Share2, MoreHorizontal, Edit3, Trash2
@@ -18,7 +18,12 @@ const typeIcons: Record<string, any> = {
 
 export const Vault = () => {
   const { user } = useAuth();
-  const [documents, setDocuments] = useState<any[]>(() => getDocumentList());
+  const [documents, setDocuments] = useState<any[]>([]);
+  
+  useEffect(() => {
+    getDocumentList().then(setDocuments);
+  }, []);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCase, setSelectedCase] = useState('');
   const [selectedClassification, setSelectedClassification] = useState('');

@@ -18,9 +18,16 @@ export const AuditViewer = () => {
   const { user } = useAuth();
   const [search, setSearch] = useState('');
   const [expandedId, setExpandedId] = useState<number | null>(null);
-  const [allDocs] = useState(() => getDocumentList());
+  
+  const [allDocs, setAllDocs] = useState<any[]>([]);
+  const [logs, setLogs] = useState<any[]>([]);
 
-  const filtered = getAuditLogs().filter((l: any) => {
+  React.useEffect(() => {
+    getDocumentList().then(setAllDocs);
+    getAuditLogs().then(setLogs);
+  }, []);
+
+  const filtered = logs.filter((l: any) => {
     return !search || 
       (l.user && l.user.toLowerCase().includes(search.toLowerCase())) || 
       (l.badge && l.badge.toLowerCase().includes(search.toLowerCase())) || 

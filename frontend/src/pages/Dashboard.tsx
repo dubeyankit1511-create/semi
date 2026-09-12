@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react';
 import { ShieldAlert, FileText, Users, Activity, TrendingUp, Lock, AlertTriangle, CheckCircle, Download } from 'lucide-react';
 import { getDocumentList, getAuditLogs, getPendingDocuments } from '../utils/dataStore';
 import { getUserDirectory } from '../utils/userStore';
@@ -9,9 +10,16 @@ const actionColors: Record<string, string> = {
 const riskColors: Record<string, string> = { LOW: '#10b981', MEDIUM: '#f59e0b', HIGH: '#ef4444' };
 
 export const Dashboard = () => {
-  const docs = getDocumentList();
-  const logs = getAuditLogs();
-  const pending = getPendingDocuments();
+  const [docs, setDocs] = useState<any[]>([]);
+  const [logs, setLogs] = useState<any[]>([]);
+  const [pending, setPending] = useState<any[]>([]);
+  
+  useEffect(() => {
+    getDocumentList().then(setDocs);
+    getAuditLogs().then(setLogs);
+    getPendingDocuments().then(setPending);
+  }, []);
+
   const users = getUserDirectory();
 
   const todayStr = new Date().toISOString().split('T')[0];

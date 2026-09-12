@@ -1,28 +1,103 @@
-export const defaultDocuments = [];
-export const defaultLogs = [];
+import { apiClient } from './apiClient';
 
-// --- Pending Verification Queue ---
-export const getPendingDocuments = () => {
-  const saved = localStorage.getItem('SECURE_SYNC_PENDING_DOCS');
-  if (saved) return JSON.parse(saved);
-  return [];
+export const getDocumentList = async () => {
+  try {
+    const res = await apiClient.get('/api/data/documents');
+    return res.data;
+  } catch {
+    return [];
+  }
 };
 
-export const savePendingDocuments = (docs: any[]) => {
-  localStorage.setItem('SECURE_SYNC_PENDING_DOCS', JSON.stringify(docs));
+export const saveDocumentList = async (docs: any[]) => {
+  // Not used typically with API, but keeping for legacy
 };
 
-export const addPendingDocument = (doc: any) => {
-  const pending = getPendingDocuments();
-  savePendingDocuments([doc, ...pending]);
+export const getPendingDocuments = async () => {
+  try {
+    const res = await apiClient.get('/api/data/documents');
+    return res.data.filter((d: any) => d.status === 'PENDING');
+  } catch {
+    return [];
+  }
 };
 
-// --- Notifications ---
+export const savePendingDocuments = async (docs: any[]) => {
+  // Not used in full API
+};
+
+export const addPendingDocument = async (doc: any) => {
+  try {
+    await apiClient.post('/api/data/documents', { ...doc, status: 'PENDING' });
+  } catch (e) {
+    console.error(e);
+  }
+};
+
+export const approveDocumentAPI = async (docId: string, verifiedBy: string) => {
+  try {
+    await apiClient.put(`/api/data/documents/${docId}`, { status: 'ACTIVE', verifiedBy });
+  } catch (e) {
+    console.error(e);
+  }
+};
+
+export const rejectDocumentAPI = async (docId: string) => {
+  try {
+    await apiClient.delete(`/api/data/documents/${docId}`);
+  } catch (e) {
+    console.error(e);
+  }
+};
+
+export const getAuditLogs = async () => {
+  try {
+    const res = await apiClient.get('/api/data/audit');
+    return res.data;
+  } catch {
+    return [];
+  }
+};
+
+export const logActivity = async (action: string, details: string, userObj: any, ip: string = '192.168.1.100', risk: string = 'LOW', docId?: string) => {
+  try {
+    const name = userObj?.name || (typeof userObj === 'string' ? userObj : 'System');
+    await apiClient.post('/api/data/audit', {
+      action,
+      userId: userObj?.id || 'SUPER-ADMIN-001',
+      ipAddress: ip,
+      details: JSON.stringify({ name, details, risk, badge: userObj?.badge }),
+      documentId: docId || null
+    });
+  } catch (e) {
+    console.error(e);
+  }
+};
+
+// Access logs
+export const getAccessLogs = () => {
+  const saved = localStorage.getItem('SECURE_SYNC_ACCESS_LOGS');
+  return saved ? JSON.parse(saved) : [];
+};
+
+export const saveAccessLogs = (logs: any[]) => {
+  localStorage.setItem('SECURE_SYNC_ACCESS_LOGS', JSON.stringify(logs));
+};
+
+export const logAccess = (action: 'LOGIN' | 'LOGOUT', userObj: any, ip: string = '192.168.1.10') => {
+  const logs = getAccessLogs();
+  const name = userObj?.name || (typeof userObj === 'string' ? userObj : 'Unknown');
+  const badge = userObj?.badge || '';
+  const dept = userObj?.department || userObj?.dept || '';
+  const newLog = { id: Date.now().toString(), timestamp: new Date().toISOString(), user: name, badge, dept, action, ip };
+  saveAccessLogs([newLog, ...logs]);
+};
+
+// Notifications
 export const getNotifications = (role: string) => {
   const key = role === 'ADMIN' ? 'SECURE_SYNC_NOTIF_ADMIN' : 'SECURE_SYNC_NOTIF_USER';
   const saved = localStorage.getItem(key);
-  if (saved) return JSON.parse(saved);
-  return [];
+  return saved ? JSON.parse(saved) : [];
 };
 
 export const saveNotifications = (role: string, notifs: any[]) => {
@@ -32,13 +107,7 @@ export const saveNotifications = (role: string, notifs: any[]) => {
 
 export const addNotification = (role: 'ADMIN' | 'USER', message: string, type: 'info' | 'success' | 'warning' | 'error' = 'info') => {
   const notifs = getNotifications(role);
-  const newNotif = {
-    id: Date.now().toString(),
-    message,
-    type,
-    read: false,
-    timestamp: new Date().toISOString(),
-  };
+  const newNotif = { id: Date.now().toString(), message, type, read: false, timestamp: new Date().toISOString() };
   saveNotifications(role, [newNotif, ...notifs]);
 };
 
@@ -50,76 +119,4 @@ export const markAllNotificationsRead = (role: string) => {
 
 export const clearNotifications = (role: string) => {
   saveNotifications(role, []);
-};
-
-export const getDocumentList = () => {
-  const saved = localStorage.getItem('SECURE_SYNC_DOCS');
-  if (saved) return JSON.parse(saved);
-  return defaultDocuments;
-};
-
-export const saveDocumentList = (docs: any[]) => {
-  localStorage.setItem('SECURE_SYNC_DOCS', JSON.stringify(docs));
-};
-
-export const getAuditLogs = () => {
-  const saved = localStorage.getItem('SECURE_SYNC_LOGS');
-  if (saved) return JSON.parse(saved);
-  return defaultLogs;
-};
-
-export const saveAuditLogs = (logs: any[]) => {
-  localStorage.setItem('SECURE_SYNC_LOGS', JSON.stringify(logs));
-};
-
-export const logActivity = (action: string, details: string, userObj: any, ip: string = '192.168.1.100', risk: string = 'LOW', docId?: string) => {
-  const logs = getAuditLogs();
-  
-  // Try to safely parse the user object or default to empty strings
-  const name = userObj?.name || (typeof userObj === 'string' ? userObj : 'System');
-  const badge = userObj?.badge || '';
-  const dept = userObj?.department || userObj?.dept || (badge === 'SA-0001' ? 'Central Command' : 'Task Force A - Case #8992');
-
-  const newLog = {
-    id: Date.now().toString(),
-    timestamp: new Date().toISOString(),
-    user: name,
-    badge,
-    dept,
-    action,
-    details,
-    ip,
-    risk,
-    docId,
-    hash: '0x' + Array.from({length: 16}, () => Math.floor(Math.random()*16).toString(16)).join('') + '...d2e'
-  };
-  saveAuditLogs([newLog, ...logs]);
-};
-export const getAccessLogs = () => {
-  const saved = localStorage.getItem('SECURE_SYNC_ACCESS_LOGS');
-  if (saved) return JSON.parse(saved);
-  return [];
-};
-
-export const saveAccessLogs = (logs: any[]) => {
-  localStorage.setItem('SECURE_SYNC_ACCESS_LOGS', JSON.stringify(logs));
-};
-
-export const logAccess = (action: 'LOGIN' | 'LOGOUT', userObj: any, ip: string = '192.168.1.10') => {
-  const logs = getAccessLogs();
-  
-  const name = userObj?.name || (typeof userObj === 'string' ? userObj : 'Unknown');
-  const badge = userObj?.badge || '';
-  const dept = userObj?.department || userObj?.dept || '';
-
-  const newLog = {
-    id: Date.now().toString(),
-    timestamp: new Date().toISOString(),
-    user: name,
-    badge,
-    dept,
-    action,
-    ip
-  };
-  saveAccessLogs([newLog, ...logs]);
 };

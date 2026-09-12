@@ -14,7 +14,11 @@ const classificationColors: Record<string, { bg: string; border: string; text: s
 
 export const DocVerification = () => {
   const { user } = useAuth();
-  const [pending, setPending] = useState<any[]>(() => getPendingDocuments());
+  const [pending, setPending] = useState<any[]>([]);
+
+  React.useEffect(() => {
+    getPendingDocuments().then(setPending);
+  }, []);
 
   if (user?.role !== 'ADMIN') {
     return (
@@ -26,15 +30,12 @@ export const DocVerification = () => {
     );
   }
 
-  const handleApprove = (doc: any) => {
-    // Move from pending to vault with Verified status
-    const approved = { ...doc, status: 'Verified', verifiedAt: new Date().toISOString(), verifiedBy: user.name };
-    const vault = getDocumentList();
-    saveDocumentList([approved, ...vault]);
+  const handleApprove = async (doc: any) => {
+    // API Call
+    await import('../utils/dataStore').then(m => m.approveDocumentAPI(doc.id, user.name));
 
-    // Remove from pending
+    // Remove from pending locally
     const updated = pending.filter((d: any) => d.id !== doc.id);
-    savePendingDocuments(updated);
     setPending(updated);
 
     logActivity('MODIFY', `Approved & verified document: ${doc.title}`, user, '192.168.1.10', 'LOW', doc.id);
@@ -42,13 +43,15 @@ export const DocVerification = () => {
     alert(`✅ Document "${doc.title}" has been APPROVED and added to the Evidence Vault.`);
   };
 
-  const handleReject = (doc: any) => {
+  const handleReject = async (doc: any) => {
     const reason = prompt(`Enter reason for rejecting "${doc.title}":`);
     if (!reason) return;
 
-    // Remove from pending (permanently rejected)
+    // API Call
+    await import('../utils/dataStore').then(m => m.rejectDocumentAPI(doc.id));
+
+    // Remove from pending locally
     const updated = pending.filter((d: any) => d.id !== doc.id);
-    savePendingDocuments(updated);
     setPending(updated);
 
     logActivity('DELETE', `Rejected document: ${doc.title} — Reason: ${reason}`, user, '192.168.1.10', 'HIGH', doc.id);

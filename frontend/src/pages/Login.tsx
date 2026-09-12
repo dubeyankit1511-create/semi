@@ -1,6 +1,7 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import axios from 'axios';
 import { Shield, Eye, EyeOff, Fingerprint, AlertCircle, ScanLine } from 'lucide-react';
 import { getUserDirectory } from '../utils/userStore';
 
@@ -32,22 +33,31 @@ export const Login = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    await new Promise(r => setTimeout(r, 1200));
 
-    const userDirectory = getUserDirectory();
-    const user = userDirectory[badge];
-    if (user && user.password === password) {
-      login('jwt-token-' + badge, {
-        name: user.firstName + ' ' + user.lastName,
-        role: user.role,
-        badge,
-        isSuperAdmin: badge === 'SA-0001',
+    try {
+      const response = await axios.post('http://localhost:5000/api/auth/login', {
+        badgeNumber: badge,
+        password: password
       });
-      navigate('/');
-    } else {
-      setError('Invalid badge number or access code. Access denied.');
+
+      if (response.data.token) {
+        // Adapt the backend user object to what the frontend AuthContext expects
+        const apiUser = response.data.user;
+        login(response.data.token, {
+          name: apiUser.firstName + ' ' + apiUser.lastName,
+          role: apiUser.role,
+          badge: apiUser.badge,
+          department: apiUser.department,
+          isSuperAdmin: apiUser.isSuperAdmin,
+        });
+        navigate('/');
+      }
+    } catch (err: any) {
+      console.error(err);
+      setError(err.response?.data?.error || 'Invalid badge number or access code. Access denied.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (

@@ -6,30 +6,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
-}
-
-enum Role {
-  ADMIN
-  OFFICER
-  INVESTIGATOR
-  AUDITOR
-}
-
-enum ActionType {
-  CREATE
-  READ
-  UPDATE
-  DELETE
-  SHARE
-  DOWNLOAD
-}
-
-enum DocumentStatus {
-  ACTIVE
-  ARCHIVED
-  EVIDENCE
 }
 
 model User {
@@ -39,7 +17,7 @@ model User {
   firstName    String
   lastName     String
   badgeNumber  String?    @unique
-  role         Role       @default(OFFICER)
+  role         String     @default("OFFICER") // "ADMIN", "OFFICER", "INVESTIGATOR", "AUDITOR"
   department   String
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
@@ -65,7 +43,7 @@ model Document {
   title            String
   description      String?
   classification   String            // e.g., "CONFIDENTIAL", "PUBLIC", "RESTRICTED"
-  status           DocumentStatus    @default(ACTIVE)
+  status           String            @default("ACTIVE") // "ACTIVE", "ARCHIVED", "EVIDENCE"
   currentVersionId String?
   caseId           String?
   caseRecord       Case?             @relation(fields: [caseId], references: [id])
@@ -94,13 +72,13 @@ model DocumentVersion {
 
 model AuditLog {
   id         String     @id @default(uuid())
-  action     ActionType
+  action     String     // "CREATE", "READ", "UPDATE", "DELETE", "SHARE", "DOWNLOAD"
   userId     String
   user       User       @relation(fields: [userId], references: [id])
   documentId String?
   document   Document?  @relation(fields: [documentId], references: [id])
   ipAddress  String?
   userAgent  String?
-  details    Json?      // Additional contextual data
+  details    String?    // JSON string for additional contextual data
   timestamp  DateTime   @default(now())
 }

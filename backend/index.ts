@@ -9,6 +9,7 @@ import authRoutes from './src/routes/authRoutes';
 import documentRoutes from './src/routes/documentRoutes';
 import searchRoutes from './src/routes/searchRoutes';
 import adminRoutes from './src/routes/adminRoutes';
+import apiRoutes from './src/routes/apiRoutes';
 import { authenticateToken } from './src/middleware/authMiddleware';
 
 dotenv.config();
@@ -40,6 +41,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/documents', documentRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/data', apiRoutes);
 
 // Global Error Handler
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
