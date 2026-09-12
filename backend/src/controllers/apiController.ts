@@ -29,7 +29,7 @@ export const createDocument = async (req: Request, res: Response) => {
 export const updateDocument = async (req: Request, res: Response) => {
   try {
     const doc = await prisma.document.update({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       data: req.body
     });
     res.json(doc);
@@ -40,7 +40,7 @@ export const updateDocument = async (req: Request, res: Response) => {
 
 export const deleteDocument = async (req: Request, res: Response) => {
   try {
-    await prisma.document.delete({ where: { id: req.params.id } });
+    await prisma.document.delete({ where: { id: req.params.id as string } });
     res.status(204).send();
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete document' });

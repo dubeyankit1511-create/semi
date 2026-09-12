@@ -11,8 +11,8 @@ export const searchAssets = async (req: AuthRequest, res: Response) => {
         AND: [
           query ? {
             OR: [
-              { title: { contains: query as string, mode: 'insensitive' } },
-              { description: { contains: query as string, mode: 'insensitive' } }
+              { title: { contains: query as string } },
+              { description: { contains: query as string } }
             ]
           } : {},
           classification ? { classification: classification as string } : {},
